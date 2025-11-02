@@ -25,18 +25,32 @@
       padding: 8px;
       box-sizing: border-box;
     }
-    button {
-      width: 100%;
-      padding: 10px;
+    .button-group {
+      display: flex;
+      gap: 10px;
       margin: 10px 0;
-      background-color: #4caf50;
-      color: white;
+    }
+    .button-group button {
+      flex: 1;
+      padding: 10px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      font-weight: bold;
     }
-    button:hover {
+    #addBtn {
+      background-color: #4caf50;
+      color: white;
+    }
+    #addBtn:hover {
       background-color: #45a049;
+    }
+    #clearFormBtn {
+      background-color: #ff9800;
+      color: white;
+    }
+    #clearFormBtn:hover {
+      background-color: #f57c00;
     }
     #report {
       margin-top: 30px;
@@ -56,6 +70,13 @@
     }
     .clear-btn {
       background-color: #f44336;
+      color: white;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
     }
     .clear-btn:hover {
       background-color: #d32f2f;
@@ -81,7 +102,10 @@
     <input type="number" id="itemQuantity" min="1" placeholder="Например: 10">
   </div>
 
-  <button onclick="addPurchase()">Добавить в отчёт</button>
+  <div class="button-group">
+    <button id="addBtn" onclick="addPurchase()">Добавить в отчёт</button>
+    <button id="clearFormBtn" onclick="clearForm()">Очистить форму</button>
+  </div>
 
   <div id="report">
     <h2>Отчёт за день</h2>
@@ -89,7 +113,7 @@
     <div class="total" id="totalSummary"></div>
   </div>
 
-  <button class="clear-btn" onclick="clearReport()">Очистить отчёт</button>
+  <button class="clear-btn" onclick="clearReport()">Очистить весь отчёт</button>
 
   <script>
     // Загружаем данные из localStorage при старте
@@ -118,7 +142,6 @@
 
       const total = price * quantity;
 
-      // Добавляем запись
       purchases.push({
         name,
         price,
@@ -127,41 +150,44 @@
         timestamp: new Date().toISOString()
       });
 
-      // Сохраняем в localStorage
       localStorage.setItem('purchases', JSON.stringify(purchases));
 
-      // Очищаем поля ввода
+      // ❗ ПОЛЯ НЕ СБРАСЫВАЮТСЯ — оставляем как есть!
+      // Но можно автоматически выделить поле "Количество", чтобы удобнее было вводить новое
+      document.getElementById('itemQuantity').select();
+      document.getElementById('itemQuantity').focus();
+
+      renderReport();
+    }
+
+    function clearForm() {
       document.getElementById('itemName').value = '';
       document.getElementById('itemPrice').value = '';
       document.getElementById('itemQuantity').value = '';
-
-      // Обновляем отчёт
-      renderReport();
+      document.getElementById('itemName').focus();
     }
 
     function renderReport() {
       const itemsList = document.getElementById('itemsList');
       const totalSummary = document.getElementById('totalSummary');
 
-      // Считаем итоги
       let totalCount = 0;
       let totalSum = 0;
 
       let html = '';
-      purchases.forEach((item, index) => {
+      purchases.forEach((item) => {
         totalCount += item.quantity;
         totalSum += item.total;
 
-        const date = new Date(item.timestamp).toLocaleTimeString('ru-RU');
+        const time = new Date(item.timestamp).toLocaleTimeString('ru-RU');
         html += `
           <div class="item">
-            <strong>${item.name}</strong> × ${item.quantity} по ${item.price.toFixed(2)} = ${item.total.toFixed(2)} (в ${date})
+            <strong>${item.name}</strong> × ${item.quantity} по ${item.price.toFixed(2)} = ${item.total.toFixed(2)} (в ${time})
           </div>
         `;
       });
 
       itemsList.innerHTML = html || '<p>Пока нет записей.</p>';
-
       totalSummary.innerHTML = `
         Всего предметов: <strong>${totalCount}</strong><br>
         Общая сумма: <strong>${totalSum.toFixed(2)}</strong>
@@ -169,14 +195,14 @@
     }
 
     function clearReport() {
-      if (confirm("Вы уверены, что хотите очистить отчёт за сегодня?")) {
+      if (confirm("Очистить ВЕСЬ отчёт за сегодня? Это действие нельзя отменить.")) {
         purchases = [];
         localStorage.removeItem('purchases');
         renderReport();
       }
     }
 
-    // При загрузке страницы — сразу показываем отчёт
+    // При загрузке — рендерим отчёт
     renderReport();
   </script>
 
