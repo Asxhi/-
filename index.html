@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Калькулятор перепродажи с отчётом</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    #report {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    .item {
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 1.1em;
+    }
+    .clear-btn {
+      background-color: #f44336;
+    }
+    .clear-btn:hover {
+      background-color: #d32f2f;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Калькулятор перепродажи</h1>
+
+  <div class="form-group">
+    <label for="itemName">Название вещи:</label>
+    <input type="text" id="itemName" placeholder="Например: Меч Легенды">
+  </div>
+
+  <div class="form-group">
+    <label for="itemPrice">Цена за штуку:</label>
+    <input type="number" id="itemPrice" step="0.01" min="0" placeholder="Например: 150.50">
+  </div>
+
+  <div class="form-group">
+    <label for="itemQuantity">Количество:</label>
+    <input type="number" id="itemQuantity" min="1" placeholder="Например: 10">
+  </div>
+
+  <button onclick="addPurchase()">Добавить в отчёт</button>
+
+  <div id="report">
+    <h2>Отчёт за день</h2>
+    <div id="itemsList"></div>
+    <div class="total" id="totalSummary"></div>
+  </div>
+
+  <button class="clear-btn" onclick="clearReport()">Очистить отчёт</button>
+
+  <script>
+    // Загружаем данные из localStorage при старте
+    let purchases = JSON.parse(localStorage.getItem('purchases')) || [];
+
+    function addPurchase() {
+      const name = document.getElementById('itemName').value.trim();
+      const priceStr = document.getElementById('itemPrice').value;
+      const quantityStr = document.getElementById('itemQuantity').value;
+
+      if (!name) {
+        alert("Укажите название вещи.");
+        return;
+      }
+      const price = parseFloat(priceStr);
+      const quantity = parseInt(quantityStr);
+
+      if (isNaN(price) || price < 0) {
+        alert("Укажите корректную цену.");
+        return;
+      }
+      if (isNaN(quantity) || quantity < 1) {
+        alert("Укажите корректное количество (минимум 1).");
+        return;
+      }
+
+      const total = price * quantity;
+
+      // Добавляем запись
+      purchases.push({
+        name,
+        price,
+        quantity,
+        total,
+        timestamp: new Date().toISOString()
+      });
+
+      // Сохраняем в localStorage
+      localStorage.setItem('purchases', JSON.stringify(purchases));
+
+      // Очищаем поля ввода
+      document.getElementById('itemName').value = '';
+      document.getElementById('itemPrice').value = '';
+      document.getElementById('itemQuantity').value = '';
+
+      // Обновляем отчёт
+      renderReport();
+    }
+
+    function renderReport() {
+      const itemsList = document.getElementById('itemsList');
+      const totalSummary = document.getElementById('totalSummary');
+
+      // Считаем итоги
+      let totalCount = 0;
+      let totalSum = 0;
+
+      let html = '';
+      purchases.forEach((item, index) => {
+        totalCount += item.quantity;
+        totalSum += item.total;
+
+        const date = new Date(item.timestamp).toLocaleTimeString('ru-RU');
+        html += `
+          <div class="item">
+            <strong>${item.name}</strong> × ${item.quantity} по ${item.price.toFixed(2)} = ${item.total.toFixed(2)} (в ${date})
+          </div>
+        `;
+      });
+
+      itemsList.innerHTML = html || '<p>Пока нет записей.</p>';
+
+      totalSummary.innerHTML = `
+        Всего предметов: <strong>${totalCount}</strong><br>
+        Общая сумма: <strong>${totalSum.toFixed(2)}</strong>
+      `;
+    }
+
+    function clearReport() {
+      if (confirm("Вы уверены, что хотите очистить отчёт за сегодня?")) {
+        purchases = [];
+        localStorage.removeItem('purchases');
+        renderReport();
+      }
+    }
+
+    // При загрузке страницы — сразу показываем отчёт
+    renderReport();
+  </script>
+
+</body>
+</html>
