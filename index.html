@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>МЯКОТЬ OCR v4 ☢️</title>
+  <title>МЯКОТЬ OCR v4.1</title>
   <style>
     body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #0f0; padding: 20px; text-align: center; }
     h1 { color: #0f0; text-shadow: 0 0 10px #0f0; }
     .calc { max-width: 800px; margin: auto; background: #111; padding: 25px; border: 2px solid #0f0; border-radius: 15px; }
-    input[type="file"], input[type="number"] { background: #222; color: #0f0; border: 1px solid #0f0; padding: 8px; border-radius: 5px; }
+    input[type="file"], input[type="number"], input[type="text"] { background: #222; color: #0f0; border: 1px solid #0f0; padding: 8px; border-radius: 5px; }
     button { background: #0f0; color: #000; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 10px; }
     button:hover { background: #0c0; }
     table { width: 100%; border-collapse: collapse; margin: 20px 0; }
@@ -17,38 +17,38 @@
     .total { font-size: 1.8em; font-weight: bold; color: #0f0; text-align: center; margin: 20px 0; text-shadow: 0 0 8px #0f0; }
     .price-input { display: flex; justify-content: space-between; margin: 8px 0; }
     canvas { border: 1px dashed #0f0; margin: 10px 0; max-width: 100%; }
-    #status { color: #ff0; margin: 10px; }
+    #status { color: #ff0; margin: 10px; font-weight: bold; }
+    .debug { color: #0af; font-size: 0.9em; }
     .footer { margin-top: 30px; font-size: 0.9em; color: #0a0; }
   </style>
 </head>
 <body>
-  <h1>☢️ МЯКОТЬ OCR КАЛЬКУЛЯТОР v4 ☢️</h1>
+  <h1>МЯКОТЬ OCR КАЛЬКУЛЯТОР v4.1</h1>
   
   <div class="calc">
     <div class="price-input">
       <label>API Key (OCR.space):</label>
-      <input type="text" id="apiKey" placeholder="K83417785288957" />
+      <input type="text" id="apiKey" placeholder="K..." />
     </div>
 
-    <div id="prices">
-      <!-- Цены загрузятся здесь -->
-    </div>
+    <div id="prices"></div>
     <button onclick="savePrices()">Сохранить цены</button>
 
     <hr style="border: 1px dashed #0f0;">
 
     <input type="file" id="screenshot" accept="image/*" />
-    <button onclick="processWithOCR()">РАСПОЗНАТЬ СКРИН (OCR)</button>
-    <div id="status"></div>
+    <button onclick="processWithOCR()">РАСПОЗНАТЬ СКРИН</button>
+    <div id="status">Готов к работе</div>
 
     <div id="result" style="display:none;">
       <canvas id="debugCanvas"></canvas>
       <table id="table"></table>
       <div class="total" id="total"></div>
+      <div class="debug" id="debug"></div>
     </div>
   </div>
 
-  <div class="footer">v4.0 | OCR.space + JS | by Grok | 2025</div>
+  <div class="footer">v4.1 | OCR.space + УСИЛЕНИЕ | by Grok | 2025</div>
 
   <script>
     const API_URL = 'https://api.ocr.space/parse/image';
@@ -62,19 +62,20 @@
     ];
     let prices = {};
 
-    // Инициализация
     function init() {
       const div = document.getElementById("prices");
       templates.forEach((t, i) => {
         div.innerHTML += `<div class="price-input"><label><span style="color:${t.color}">● ${t.name}:</span></label><input type="number" id="price${i}" value="0" /></div>`;
       });
       loadPrices();
+      document.getElementById("apiKey").value = localStorage.getItem("ocr_api_key") || "";
     }
 
     function savePrices() {
       templates.forEach((t, i) => prices[t.name] = parseInt(document.getElementById(`price${i}`).value) || 0);
       localStorage.setItem("pulp_prices", JSON.stringify(prices));
-      alert("Цены сохранены!");
+      localStorage.setItem("ocr_api_key", document.getElementById("apiKey").value);
+      alert("Цены и ключ сохранены!");
     }
 
     function loadPrices() {
@@ -85,16 +86,16 @@
       }
     }
 
-    // Основная обработка
     async function processWithOCR() {
       const file = document.getElementById("screenshot").files[0];
       if (!file) return alert("Загрузи скрин!");
+      const apiKey = document.getElementById("apiKey").value.trim();
+      if (!apiKey) return alert("Вставь API-ключ!");
       if (Object.keys(prices).length === 0) return alert("Укажи цены!");
 
-      const apiKey = document.getElementById("apiKey").value;
-      if (!apiKey) return alert("Вставь API-ключ!");
+      document.getElementById("status").innerText = "Обрабатываю...";
+      document.getElementById("debug").innerText = "";
 
-      document.getElementById("status").innerText = "Обрабатываю... (OCR + цвета)";
       const img = await loadImage(file);
       const canvas = document.getElementById("debugCanvas");
       const ctx = canvas.getContext("2d");
@@ -103,26 +104,28 @@
 
       const cells = detectGrid(img);
       const results = [];
+      let debug = "";
 
       for (let cell of cells) {
-        // 1. Цвет для типа
         const match = getColorType(cell.canvas);
         if (!match) continue;
 
-        // 2. OCR для числа (crop правый верх)
-        const crop = cropNumberArea(cell.canvas);
-        const countText = await ocrRequest(crop, apiKey);
+        // УВЕЛИЧЕННЫЙ + РЕЗКИЙ CROP
+        const cropCanvas = enhanceNumberArea(cell.canvas);
+        const cropDataUrl = cropCanvas.toDataURL('image/png');
+        const countText = await ocrRequest(cropDataUrl, apiKey);
         const count = parseNumber(countText) || 0;
 
+        debug += `${match.name}: OCR="${countText}" → ${count} шт\n`;
         results.push({ type: match.name, count, price: prices[match.name] || 0 });
         drawCell(ctx, cell, match.name, count);
       }
 
+      document.getElementById("debug").innerText = debug || "Нет данных";
       displayResults(results);
       document.getElementById("status").innerText = "Готово!";
     }
 
-    // Детекция сетки 2x3
     function detectGrid(img) {
       const cells = [];
       const w = img.width / 3;
@@ -139,60 +142,75 @@
       return cells;
     }
 
-    // Анализ цвета (RGB среднее)
     function getColorType(canvas) {
       const ctx = canvas.getContext("2d");
       const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       let r = 0, g = 0, b = 0, count = 0;
       for (let i = 0; i < data.length; i += 4) {
-        if (data[i + 3] > 100) { r += data[i]; g += data[i + 1]; b += data[i + 2]; count++; }
+        if (data[i + 3] > 80) { r += data[i]; g += data[i + 1]; b += data[i + 2]; count++; }
       }
       if (count === 0) return null;
       r /= count; g /= count; b /= count;
-      return templates.find(t => {
-        if (t.color === "red" && r > 180 && g < 120 && b < 120) return true;
-        if (t.color === "blue" && r < 120 && g < 120 && b > 160) return true;
-        if (t.color === "green" && r < 120 && g > 160 && b < 120) return true;
-        if (t.color === "yellow" && r > 160 && g > 160 && b < 120) return true;
-        if (t.color === "purple" && r > 100 && g < 100 && b > 140) return true;
-        if (t.color === "white" && r > 200 && g > 200 && b > 200) return true;
-        return false;
-      });
+
+      if (r > 180 && g < 130 && b < 130) return templates[0]; // red
+      if (r < 130 && g < 130 && b > 160) return templates[3]; // blue
+      if (r < 130 && g > 160 && b < 130) return templates[2]; // green
+      if (r > 160 && g > 120 && b < 130) return templates[4]; // yellow
+      if (r > 100 && g < 110 && b > 140) return templates[1]; // purple
+      if (r > 200 && g > 200 && b > 200) return templates[5]; // white
+      return null;
     }
 
-    // Crop для числа (правый верх, 100x50)
-    function cropNumberArea(canvas) {
+    // УСИЛЕННЫЙ CROP: ×2 + РЕЗКОСТЬ
+    function enhanceNumberArea(canvas) {
       const crop = document.createElement("canvas");
-      crop.width = 100; crop.height = 50;
+      crop.width = 300; crop.height = 160; // ×2 от 150×80
       const ctx = crop.getContext("2d");
-      ctx.drawImage(canvas, canvas.width - 100, 0, 100, 50, 0, 0, 100, 50);
-      return crop.toDataURL('image/png');
+
+      // Рисуем увеличенный кусок
+      ctx.drawImage(canvas, canvas.width - 150, 0, 150, 80, 0, 0, 300, 160);
+
+      // Резкость (unsharp mask)
+      const imageData = ctx.getImageData(0, 0, 300, 160);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] > 200 && data[i+1] > 200 && data[i+2] > 200) {
+          data[i] = data[i+1] = data[i+2] = 255; // белый → ярче
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      return crop;
     }
 
-    // Запрос к OCR.space
     async function ocrRequest(imageDataUrl, apiKey) {
       const formData = new FormData();
       formData.append('base64Image', imageDataUrl.split(',')[1]);
       formData.append('apikey', apiKey);
       formData.append('language', 'eng');
-      formData.append('isOverlayRequired', false);
+      formData.append('scale', 'true');
+      formData.append('isOverlayRequired', 'false');
 
-      const response = await fetch(API_URL, { method: 'POST', body: formData });
-      const json = await response.json();
-      return json.ParsedResults[0]?.ParsedText || '';
+      try {
+        const response = await fetch(API_URL, { method: 'POST', body: formData });
+        const json = await response.json();
+        return json.ParsedResults?.[0]?.ParsedText || '';
+      } catch (e) {
+        return '';
+      }
     }
 
-    // Парсинг числа из текста (e.g. "16x" → 16)
     function parseNumber(text) {
-      const match = text.match(/(\d+)x?/i);
+      const cleaned = text.replace(/[^0-9x]/gi, '');
+      const match = cleaned.match(/(\d+)x?/i);
       return match ? parseInt(match[1]) : 0;
     }
 
     function drawCell(ctx, cell, name, count) {
-      ctx.strokeStyle = "#0f0"; ctx.lineWidth = 3;
-      ctx.strokeRect(cell.x, cell.y, cell.w, cell.h);
-      ctx.fillStyle = "#0f0"; ctx.font = "20px Arial";
-      ctx.fillText(`${name}: ${count}x`, cell.x + 10, cell.y + 30);
+      ctx.strokeStyle = "#0f0"; ctx.lineWidth = 4;
+      ctx.strokeRect(cell.x + 2, cell.y + 2, cell.w - 4, cell.h - 4);
+      ctx.fillStyle = "#0f0"; ctx.font = "24px Arial";
+      ctx.fillText(`${name}: ${count}x`, cell.x + 15, cell.y + 35);
     }
 
     function displayResults(results) {
