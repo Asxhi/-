@@ -3,171 +3,304 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Калькулятор закупа и продаж</title>
+  <title>Перепродажа: Покупки и Продажи</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 20px auto;
+      max-width: 900px;
+      margin: 15px auto;
       padding: 15px;
-      background-color: #f5f5f5;
+      background-color: #f9f9f9;
     }
 
-    .calculator-container {
+    .columns {
       display: flex;
-      gap: 25px;
+      gap: 20px;
       flex-wrap: wrap;
     }
-
-    .calculator {
+    .column {
       flex: 1;
       min-width: 300px;
       background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+    .buy-column { border-top: 4px solid #2e7d32; }
+    .sell-column { border-top: 4px solid #c62828; }
 
-    .buy-calculator { border-top: 4px solid #2e7d32; }
-    .sell-calculator { border-top: 4px solid #c62828; }
-
-    .calculator h2 {
+    .column h3 {
       margin-top: 0;
-      text-align: center;
+      color: #333;
     }
-    .buy-calculator h2 { color: #2e7d32; }
-    .sell-calculator h2 { color: #c62828; }
+    .buy-column h3 { color: #2e7d32; }
+    .sell-column h3 { color: #c62828; }
 
     .form-group {
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
     label {
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       font-weight: bold;
+      font-size: 0.95em;
     }
     input {
       width: 100%;
-      padding: 10px;
+      padding: 8px;
       box-sizing: border-box;
       border: 1px solid #ccc;
       border-radius: 4px;
     }
 
-    .result {
-      margin-top: 20px;
-      padding: 12px;
-      background-color: #f9f9f9;
-      border-radius: 6px;
-      text-align: center;
-      font-size: 1.2em;
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
       font-weight: bold;
+      margin-top: 8px;
     }
-    .buy-result { color: #2e7d32; }
-    .sell-result { color: #c62828; }
+    .btn-buy { background-color: #2e7d32; color: white; }
+    .btn-sell { background-color: #c62828; color: white; }
+    .btn-clear { background-color: #ff9800; color: white; }
+    .btn:hover { opacity: 0.9; }
 
-    .profit-section {
-      margin-top: 30px;
-      text-align: center;
-      padding: 20px;
+    .report-section {
+      margin-top: 25px;
       background: white;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
     }
-    .profit-value {
-      font-size: 1.4em;
+    .period-header {
+      font-size: 1.1em;
+      margin: 12px 0 8px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #eee;
+    }
+    .summary {
+      margin-top: 8px;
       font-weight: bold;
-      margin-top: 10px;
     }
-    .profit-positive { color: #2e7d32; }
-    .profit-negative { color: #c62828; }
+    .item {
+      font-size: 0.92em;
+      padding: 4px 0;
+      color: #555;
+    }
+    .buy-item { color: #2e7d32; }
+    .sell-item { color: #c62828; }
+
+    .clear-all-btn {
+      background-color: #f44336;
+      color: white;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    .clear-all-btn:hover { background-color: #d32f2f; }
   </style>
 </head>
 <body>
 
-  <h1 style="text-align: center;">Калькулятор закупа и продаж</h1>
+  <h1>📊 Учёт перепродаж (100+ сделок в день)</h1>
 
-  <div class="calculator-container">
+  <div class="columns">
     <!-- ПОКУПКИ -->
-    <div class="calculator buy-calculator">
-      <h2>🛒 Закуп</h2>
+    <div class="column buy-column">
+      <h3>🛒 Скупка</h3>
       <div class="form-group">
         <label>Название:</label>
-        <input type="text" id="buyName" placeholder="Меч Легенды" oninput="calculate()">
+        <input type="text" id="buyName" placeholder="Меч Легенды">
       </div>
       <div class="form-group">
         <label>Цена за штуку:</label>
-        <input type="number" id="buyPrice" step="0.01" min="0" placeholder="150.50" oninput="calculate()">
+        <input type="number" id="buyPrice" step="0.01" min="0" placeholder="150.50">
       </div>
       <div class="form-group">
         <label>Количество:</label>
-        <input type="number" id="buyQty" min="1" placeholder="10" oninput="calculate()">
+        <input type="number" id="buyQty" min="1" placeholder="10">
       </div>
-      <div class="result buy-result" id="buyResult">Итого закуп: 0.00</div>
+      <button class="btn btn-buy" onclick="addBuy()">Добавить покупку</button>
+      <button class="btn btn-clear" onclick="clearBuyForm()">Очистить форму</button>
     </div>
 
     <!-- ПРОДАЖИ -->
-    <div class="calculator sell-calculator">
-      <h2>💰 Продажа</h2>
+    <div class="column sell-column">
+      <h3>💰 Продажа</h3>
       <div class="form-group">
         <label>Название:</label>
-        <input type="text" id="sellName" placeholder="Меч Легенды" oninput="calculate()">
+        <input type="text" id="sellName" placeholder="Меч Легенды">
       </div>
       <div class="form-group">
         <label>Цена за штуку:</label>
-        <input type="number" id="sellPrice" step="0.01" min="0" placeholder="180.00" oninput="calculate()">
+        <input type="number" id="sellPrice" step="0.01" min="0" placeholder="180.00">
       </div>
       <div class="form-group">
         <label>Количество:</label>
-        <input type="number" id="sellQty" min="1" placeholder="8" oninput="calculate()">
+        <input type="number" id="sellQty" min="1" placeholder="8">
       </div>
-      <div class="result sell-result" id="sellResult">Итого продаж: 0.00</div>
+      <button class="btn btn-sell" onclick="addSell()">Добавить продажу</button>
+      <button class="btn btn-clear" onclick="clearSellForm()">Очистить форму</button>
     </div>
   </div>
 
-  <!-- ОБЩАЯ ПРИБЫЛЬ -->
-  <div class="profit-section">
-    <h2>📈 Чистая прибыль</h2>
-    <div class="profit-value" id="profitResult">0.00</div>
-    <div id="profitLabel">Заполните поля, чтобы увидеть прибыль</div>
+  <div class="report-section">
+    <h2>📈 Отчёты по периодам</h2>
+    <div id="reportsContainer"></div>
   </div>
 
+  <button class="clear-all-btn" onclick="clearAllData()">Очистить ВСЕ данные (начать новый день)</button>
+
   <script>
-    function calculate() {
-      // Покупки
-      const buyPrice = parseFloat(document.getElementById('buyPrice').value) || 0;
-      const buyQty = parseInt(document.getElementById('buyQty').value) || 0;
-      const buyTotal = buyPrice * buyQty;
+    // Вспомогательные функции даты
+    function today() {
+      return new Date().toISOString().split('T')[0]; // "2025-11-03"
+    }
+    function getDateDaysAgo(days) {
+      const d = new Date();
+      d.setDate(d.getDate() - days);
+      return d.toISOString().split('T')[0];
+    }
+    function getWeekStart() {
+      const d = new Date();
+      const day = d.getDay() || 7;
+      d.setDate(d.getDate() - (day - 1)); // понедельник
+      return d.toISOString().split('T')[0];
+    }
+    function getMonthStart() {
+      const d = new Date();
+      return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+    }
 
-      // Продажи
-      const sellPrice = parseFloat(document.getElementById('sellPrice').value) || 0;
-      const sellQty = parseInt(document.getElementById('sellQty').value) || 0;
-      const sellTotal = sellPrice * sellQty;
+    // Загрузка данных
+    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 
-      // Обновляем результаты
-      document.getElementById('buyResult').textContent = `Итого закуп: ${buyTotal.toFixed(2)}`;
-      document.getElementById('sellResult').textContent = `Итого продаж: ${sellTotal.toFixed(2)}`;
+    // Добавление покупки
+    function addBuy() {
+      const name = document.getElementById('buyName').value.trim();
+      const priceStr = document.getElementById('buyPrice').value;
+      const qtyStr = document.getElementById('buyQty').value;
 
-      // Прибыль
-      const profit = sellTotal - buyTotal;
-      const profitEl = document.getElementById('profitResult');
-      const labelEl = document.getElementById('profitLabel');
+      if (!name) { alert("Укажите название покупки."); return; }
+      const price = parseFloat(priceStr);
+      const qty = parseInt(qtyStr);
+      if (isNaN(price) || price < 0) { alert("Некорректная цена покупки."); return; }
+      if (isNaN(qty) || qty < 1) { alert("Некорректное количество покупки."); return; }
 
-      profitEl.textContent = profit.toFixed(2);
-      if (profit > 0) {
-        profitEl.className = 'profit-value profit-positive';
-        labelEl.textContent = 'Поздравляю! Прибыль 💰';
-      } else if (profit < 0) {
-        profitEl.className = 'profit-value profit-negative';
-        labelEl.textContent = 'Убыток... 😟';
-      } else {
-        profitEl.className = 'profit-value';
-        labelEl.textContent = 'В ноль. Может, в следующий раз!';
+      const total = price * qty;
+      transactions.push({ type: 'buy', name, price, quantity: qty, total, date: today() });
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+
+      // Фокус на количестве — для быстрого повтора
+      document.getElementById('buyQty').select();
+      document.getElementById('buyQty').focus();
+
+      renderReports();
+    }
+
+    // Добавление продажи
+    function addSell() {
+      const name = document.getElementById('sellName').value.trim();
+      const priceStr = document.getElementById('sellPrice').value;
+      const qtyStr = document.getElementById('sellQty').value;
+
+      if (!name) { alert("Укажите название продажи."); return; }
+      const price = parseFloat(priceStr);
+      const qty = parseInt(qtyStr);
+      if (isNaN(price) || price < 0) { alert("Некорректная цена продажи."); return; }
+      if (isNaN(qty) || qty < 1) { alert("Некорректное количество продажи."); return; }
+
+      const total = price * qty;
+      transactions.push({ type: 'sell', name, price, quantity: qty, total, date: today() });
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+
+      document.getElementById('sellQty').select();
+      document.getElementById('sellQty').focus();
+
+      renderReports();
+    }
+
+    // Очистка форм
+    function clearBuyForm() {
+      document.getElementById('buyName').value = '';
+      document.getElementById('buyPrice').value = '';
+      document.getElementById('buyQty').value = '';
+      document.getElementById('buyName').focus();
+    }
+    function clearSellForm() {
+      document.getElementById('sellName').value = '';
+      document.getElementById('sellPrice').value = '';
+      document.getElementById('sellQty').value = '';
+      document.getElementById('sellName').focus();
+    }
+
+    // Фильтрация по дате
+    function filterByDateRange(startDate, endDate = today()) {
+      return transactions.filter(t => t.date >= startDate && t.date <= endDate);
+    }
+
+    // Генерация отчёта
+    function generateReport(transactions, title) {
+      if (transactions.length === 0) return '';
+
+      let spent = 0, earned = 0;
+      let itemsHtml = '';
+
+      transactions.forEach(t => {
+        const className = t.type === 'buy' ? 'buy-item' : 'sell-item';
+        const sign = t.type === 'buy' ? '–' : '+';
+        itemsHtml += `<div class="item ${className}">${sign} ${t.name} ×${t.quantity} по ${t.price.toFixed(2)} = ${t.total.toFixed(2)} (${t.date})</div>`;
+
+        if (t.type === 'buy') spent += t.total;
+        if (t.type === 'sell') earned += t.total;
+      });
+
+      const profit = earned - spent;
+      const profitColor = profit >= 0 ? '#2e7d32' : '#c62828';
+
+      return `
+        <div class="period-header">${title}</div>
+        <div>${itemsHtml}</div>
+        <div class="summary">
+          Потрачено: <strong>${spent.toFixed(2)}</strong> | 
+          Выручка: <strong>${earned.toFixed(2)}</strong> | 
+          Прибыль: <strong style="color:${profitColor}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)}</strong>
+        </div>
+      `;
+    }
+
+    function renderReports() {
+      const container = document.getElementById('reportsContainer');
+
+      const todayTx = filterByDateRange(today());
+      const yesterdayTx = filterByDateRange(getDateDaysAgo(1), getDateDaysAgo(1));
+      const weekTx = filterByDateRange(getWeekStart());
+      const monthTx = filterByDateRange(getMonthStart());
+
+      let html = '';
+      html += generateReport(todayTx, 'Сегодня');
+      html += generateReport(yesterdayTx, 'Вчера');
+      html += generateReport(weekTx, 'Эта неделя');
+      html += generateReport(monthTx, 'Этот месяц');
+
+      container.innerHTML = html || '<p>Нет данных</p>';
+    }
+
+    function clearAllData() {
+      if (confirm("Очистить ВСЕ данные? Это начнёт новый день.")) {
+        transactions = [];
+        localStorage.removeItem('transactions');
+        renderReports();
       }
     }
 
-    // Запускаем расчёт при загрузке (на случай, если поля уже заполнены)
-    calculate();
+    // Инициализация
+    renderReports();
   </script>
 
 </body>
