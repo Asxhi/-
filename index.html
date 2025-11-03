@@ -3,15 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Калькулятор прибыли по перепродаже</title>
+  <title>Калькулятор прибыли: Покупки и Продажи</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 650px;
+      max-width: 700px;
       margin: 15px auto;
       padding: 15px;
       background-color: #f9f9f9;
     }
+
+    .columns {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .column {
+      flex: 1;
+      min-width: 280px;
+      background: white;
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .buy-column { border-top: 4px solid #2e7d32; }
+    .sell-column { border-top: 4px solid #c62828; }
+
+    .column h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .buy-column h3 { color: #2e7d32; }
+    .sell-column h3 { color: #c62828; }
+
     .form-group {
       margin-bottom: 12px;
     }
@@ -19,30 +43,30 @@
       display: block;
       margin-bottom: 4px;
       font-weight: bold;
+      font-size: 0.95em;
     }
-    input, select {
+    input {
       width: 100%;
       padding: 8px;
       box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
-    .button-group {
-      display: flex;
-      gap: 10px;
-      margin: 12px 0;
-    }
-    .button-group button {
-      flex: 1;
+
+    .btn {
+      width: 100%;
       padding: 10px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-weight: bold;
+      margin-top: 8px;
     }
-    #addBtn { background-color: #4caf50; color: white; }
-    #addBtn:hover { background-color: #45a049; }
-    #clearFormBtn { background-color: #ff9800; color: white; }
-    #clearFormBtn:hover { background-color: #f57c00; }
-    
+    .btn-buy { background-color: #2e7d32; color: white; }
+    .btn-sell { background-color: #c62828; color: white; }
+    .btn-clear { background-color: #ff9800; color: white; }
+    .btn:hover { opacity: 0.9; }
+
     .report-section {
       margin-top: 25px;
       background: white;
@@ -60,7 +84,15 @@
       margin-top: 8px;
       font-weight: bold;
     }
-    .clear-btn {
+    .item {
+      font-size: 0.92em;
+      padding: 4px 0;
+      color: #555;
+    }
+    .buy-item { color: #2e7d32; }
+    .sell-item { color: #c62828; }
+
+    .clear-all-btn {
       background-color: #f44336;
       color: white;
       width: 100%;
@@ -68,61 +100,66 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 15px;
     }
-    .clear-btn:hover { background-color: #d32f2f; }
-    .item {
-      font-size: 0.95em;
-      padding: 5px 0;
-      color: #555;
-    }
-    .buy { color: #2e7d32; }
-    .sell { color: #c62828; }
+    .clear-all-btn:hover { background-color: #d32f2f; }
   </style>
 </head>
 <body>
 
-  <h1>Калькулятор прибыли по перепродаже</h1>
+  <h1>Калькулятор прибыли</h1>
 
-  <div class="form-group">
-    <label>Тип операции:</label>
-    <select id="operationType">
-      <option value="buy">Покупка</option>
-      <option value="sell">Продажа</option>
-    </select>
-  </div>
+  <div class="columns">
+    <!-- ПОКУПКА -->
+    <div class="column buy-column">
+      <h3>🛒 Скупка</h3>
+      <div class="form-group">
+        <label>Название:</label>
+        <input type="text" id="buyName" placeholder="Меч Легенды">
+      </div>
+      <div class="form-group">
+        <label>Цена за штуку:</label>
+        <input type="number" id="buyPrice" step="0.01" min="0" placeholder="150.50">
+      </div>
+      <div class="form-group">
+        <label>Количество:</label>
+        <input type="number" id="buyQty" min="1" placeholder="10">
+      </div>
+      <button class="btn btn-buy" onclick="addTransaction('buy')">Добавить покупку</button>
+      <button class="btn btn-clear" onclick="clearForm('buy')">Очистить форму</button>
+    </div>
 
-  <div class="form-group">
-    <label for="itemName">Название вещи:</label>
-    <input type="text" id="itemName" placeholder="Например: Меч Легенды">
-  </div>
-
-  <div class="form-group">
-    <label for="itemPrice">Цена за штуку:</label>
-    <input type="number" id="itemPrice" step="0.01" min="0" placeholder="150.50">
-  </div>
-
-  <div class="form-group">
-    <label for="itemQuantity">Количество:</label>
-    <input type="number" id="itemQuantity" min="1" placeholder="10">
-  </div>
-
-  <div class="button-group">
-    <button id="addBtn" onclick="addTransaction()">Добавить</button>
-    <button id="clearFormBtn" onclick="clearForm()">Очистить форму</button>
+    <!-- ПРОДАЖА -->
+    <div class="column sell-column">
+      <h3>💰 Продажа</h3>
+      <div class="form-group">
+        <label>Название:</label>
+        <input type="text" id="sellName" placeholder="Меч Легенды">
+      </div>
+      <div class="form-group">
+        <label>Цена за штуку:</label>
+        <input type="number" id="sellPrice" step="0.01" min="0" placeholder="180.00">
+      </div>
+      <div class="form-group">
+        <label>Количество:</label>
+        <input type="number" id="sellQty" min="1" placeholder="8">
+      </div>
+      <button class="btn btn-sell" onclick="addTransaction('sell')">Добавить продажу</button>
+      <button class="btn btn-clear" onclick="clearForm('sell')">Очистить форму</button>
+    </div>
   </div>
 
   <div class="report-section">
-    <h2>Отчёты</h2>
+    <h2>📊 Отчёты</h2>
     <div id="reportsContainer"></div>
   </div>
 
-  <button class="clear-btn" onclick="clearAllData()">Очистить ВСЕ данные</button>
+  <button class="clear-all-btn" onclick="clearAllData()">Очистить ВСЕ данные</button>
 
   <script>
     // Вспомогательные функции даты
     function today() {
-      return new Date().toISOString().split('T')[0]; // "2025-11-03"
+      return new Date().toISOString().split('T')[0];
     }
     function getDateDaysAgo(days) {
       const d = new Date();
@@ -132,7 +169,7 @@
     function getWeekStart() {
       const d = new Date();
       const day = d.getDay() || 7;
-      d.setDate(d.getDate() - (day - 1)); // понедельник текущей недели
+      d.setDate(d.getDate() - (day - 1));
       return d.toISOString().split('T')[0];
     }
     function getMonthStart() {
@@ -143,54 +180,53 @@
     // Загрузка данных
     let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 
-    function addTransaction() {
-      const type = document.getElementById('operationType').value;
-      const name = document.getElementById('itemName').value.trim();
-      const priceStr = document.getElementById('itemPrice').value;
-      const quantityStr = document.getElementById('itemQuantity').value;
+    function addTransaction(type) {
+      const prefix = type === 'buy' ? 'buy' : 'sell';
+      const name = document.getElementById(prefix + 'Name').value.trim();
+      const priceStr = document.getElementById(prefix + 'Price').value;
+      const qtyStr = document.getElementById(prefix + 'Qty').value;
 
       if (!name) { alert("Укажите название."); return; }
       const price = parseFloat(priceStr);
-      const quantity = parseInt(quantityStr);
+      const qty = parseInt(qtyStr);
       if (isNaN(price) || price < 0) { alert("Некорректная цена."); return; }
-      if (isNaN(quantity) || quantity < 1) { alert("Некорректное количество."); return; }
+      if (isNaN(qty) || qty < 1) { alert("Некорректное количество."); return; }
 
-      const total = price * quantity;
+      const total = price * qty;
       const date = today();
 
-      transactions.push({ type, name, price, quantity, total, date });
+      transactions.push({ type, name, price, quantity: qty, total, date });
       localStorage.setItem('transactions', JSON.stringify(transactions));
 
-      // Фокус на количестве для быстрого повтора
-      document.getElementById('itemQuantity').select();
-      document.getElementById('itemQuantity').focus();
+      // Фокус на количество в той же колонке
+      document.getElementById(prefix + 'Qty').select();
+      document.getElementById(prefix + 'Qty').focus();
 
       renderReports();
     }
 
-    function clearForm() {
-      document.getElementById('itemName').value = '';
-      document.getElementById('itemPrice').value = '';
-      document.getElementById('itemQuantity').value = '';
-      document.getElementById('operationType').value = 'buy';
-      document.getElementById('itemName').focus();
+    function clearForm(type) {
+      const prefix = type === 'buy' ? 'buy' : 'sell';
+      document.getElementById(prefix + 'Name').value = '';
+      document.getElementById(prefix + 'Price').value = '';
+      document.getElementById(prefix + 'Qty').value = '';
+      document.getElementById(prefix + 'Name').focus();
     }
 
-    // Фильтрация транзакций по диапазону дат
+    // Фильтрация по дате
     function filterByDateRange(startDate, endDate = today()) {
       return transactions.filter(t => t.date >= startDate && t.date <= endDate);
     }
 
-    // Генерация отчёта по списку транзакций
+    // Генерация отчёта
     function generateReport(transactions, title) {
       if (transactions.length === 0) return '';
 
-      let spent = 0; // потрачено (покупки)
-      let earned = 0; // выручено (продажи)
+      let spent = 0, earned = 0;
       let itemsHtml = '';
 
       transactions.forEach(t => {
-        const className = t.type === 'buy' ? 'buy' : 'sell';
+        const className = t.type === 'buy' ? 'buy-item' : 'sell-item';
         const sign = t.type === 'buy' ? '–' : '+';
         itemsHtml += `<div class="item ${className}">${sign} ${t.name} ×${t.quantity} по ${t.price.toFixed(2)} = ${t.total.toFixed(2)} (${t.date})</div>`;
 
@@ -226,19 +262,18 @@
       html += generateReport(weekTx, 'Эта неделя');
       html += generateReport(monthTx, 'Этот месяц');
 
-      if (!html) html = '<p>Нет данных</p>';
-      container.innerHTML = html;
+      container.innerHTML = html || '<p>Нет данных</p>';
     }
 
     function clearAllData() {
-      if (confirm("Очистить ВСЕ данные навсегда?")) {
+      if (confirm("Очистить ВСЕ данные? Это нельзя отменить!")) {
         transactions = [];
         localStorage.removeItem('transactions');
         renderReports();
       }
     }
 
-    // Инициализация
+    // Запуск
     renderReports();
   </script>
 
