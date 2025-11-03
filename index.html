@@ -3,327 +3,274 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Перепродажа: Расчёт + Отчёт</title>
+  <title>STALCRAFT: Мякоть Калькулятор</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 15px auto;
-      padding: 15px;
-      background-color: #f9f9f9;
-    }
-
-    .columns {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-    .column {
-      flex: 1;
-      min-width: 300px;
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .buy-column { border-top: 4px solid #2e7d32; }
-    .sell-column { border-top: 4px solid #c62828; }
-
-    .column h3 {
-      margin-top: 0;
-      color: #333;
-    }
-    .buy-column h3 { color: #2e7d32; }
-    .sell-column h3 { color: #c62828; }
-
-    .form-group {
-      margin-bottom: 12px;
-    }
-    label {
-      display: block;
-      margin-bottom: 4px;
-      font-weight: bold;
-      font-size: 0.95em;
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      box-sizing: border-box;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-
-    .preview {
-      margin: 12px 0;
-      padding: 10px;
-      background-color: #f5f5f5;
-      border-radius: 6px;
-      text-align: center;
-      font-weight: bold;
-    }
-    .preview-buy { color: #2e7d32; }
-    .preview-sell { color: #c62828; }
-
-    .btn {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 6px;
-    }
-    .btn-save { background-color: #1976d2; color: white; }
-    .btn-clear { background-color: #ff9800; color: white; }
-    .btn:hover { opacity: 0.9; }
-
-    .report-section {
-      margin-top: 25px;
-      background: white;
-      padding: 15px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
-    }
-    .period-header {
-      font-size: 1.1em;
-      margin: 12px 0 8px;
-      padding-bottom: 5px;
-      border-bottom: 1px solid #eee;
-    }
-    .summary {
-      margin-top: 8px;
-      font-weight: bold;
-    }
-    .item {
-      font-size: 0.92em;
-      padding: 4px 0;
-      color: #555;
-    }
-    .buy-item { color: #2e7d32; }
-    .sell-item { color: #c62828; }
-
-    .clear-all-btn {
-      background-color: #f44336;
-      color: white;
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 15px;
-    }
+    body { font-family: Arial, sans-serif; background: #111; color: #0f0; padding: 20px; }
+    h1 { text-align: center; color: #0f0; text-shadow: 0 0 5px #0f0; }
+    .container { max-width: 900px; margin: auto; }
+    .templates, .input, .result { background: #222; padding: 15px; border: 1px solid #0f0; border-radius: 10px; margin: 15px 0; }
+    .template-item { display: inline-block; margin: 10px; text-align: center; }
+    .template-item img { width: 80px; height: 80px; border: 2px solid #0f0; border-radius: 8px; }
+    input[type="number"] { width: 80px; background: #333; color: #0f0; border: 1px solid #0f0; padding: 5px; }
+    button { background: #0f0; color: #000; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    button:hover { background: #0c0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #0f0; padding: 8px; text-align: center; }
+    th { background: #003300; }
+    .total { font-size: 1.5em; font-weight: bold; color: #0f0; text-align: center; margin: 20px 0; }
+    canvas { border: 1px dashed #0f0; margin: 10px 0; }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>☢️ МЯКОТЬ КАЛЬКУЛЯТОР ☢️</h1>
 
-  <h1>📊 Перепродажа: Расчёт → Подтверждение → Отчёт</h1>
-
-  <div class="columns">
-    <!-- ПОКУПКИ -->
-    <div class="column buy-column">
-      <h3>🛒 Скупка</h3>
-      <div class="form-group">
-        <label>Название:</label>
-        <input type="text" id="buyName" placeholder="Меч Легенды" oninput="updatePreview('buy')">
-      </div>
-      <div class="form-group">
-        <label>Цена за штуку:</label>
-        <input type="number" id="buyPrice" step="0.01" min="0" placeholder="150.50" oninput="updatePreview('buy')">
-      </div>
-      <div class="form-group">
-        <label>Количество:</label>
-        <input type="number" id="buyQty" min="1" placeholder="10" oninput="updatePreview('buy')">
-      </div>
-      <div class="preview preview-buy" id="buyPreview">Итого: 0.00</div>
-      <button class="btn btn-save" onclick="saveBuy()">✅ Сохранить покупку в отчёт</button>
-      <button class="btn btn-clear" onclick="clearBuyForm()">Очистить форму</button>
+    <div class="templates">
+      <h3>1. Загрузи шаблоны (по 1 на тип)</h3>
+      <div id="templates"></div>
+      <button onclick="saveTemplates()">Сохранить шаблоны</button>
     </div>
 
-    <!-- ПРОДАЖИ -->
-    <div class="column sell-column">
-      <h3>💰 Продажа</h3>
-      <div class="form-group">
-        <label>Название:</label>
-        <input type="text" id="sellName" placeholder="Меч Легенды" oninput="updatePreview('sell')">
-      </div>
-      <div class="form-group">
-        <label>Цена за штуку:</label>
-        <input type="number" id="sellPrice" step="0.01" min="0" placeholder="180.00" oninput="updatePreview('sell')">
-      </div>
-      <div class="form-group">
-        <label>Количество:</label>
-        <input type="number" id="sellQty" min="1" placeholder="8" oninput="updatePreview('sell')">
-      </div>
-      <div class="preview preview-sell" id="sellPreview">Итого: 0.00</div>
-      <button class="btn btn-save" onclick="saveSell()">✅ Сохранить продажу в отчёт</button>
-      <button class="btn btn-clear" onclick="clearSellForm()">Очистить форму</button>
+    <div class="input">
+      <h3>2. Цены (руб/шт)</h3>
+      <div id="prices"></div>
+      <button onclick="savePrices()">Сохранить цены</button>
+    </div>
+
+    <div class="input">
+      <h3>3. Загрузи скриншот из обмена</h3>
+      <input type="file" id="screenshot" accept="image/*" />
+      <button onclick="processScreenshot()">Распознать</button>
+    </div>
+
+    <div class="result" id="result" style="display:none;">
+      <h3>Результат:</h3>
+      <table id="table"></table>
+      <div class="total" id="total"></div>
+      <canvas id="debugCanvas" width="600" height="400"></canvas>
     </div>
   </div>
-
-  <div class="report-section">
-    <h2>📈 Отчёты по периодам</h2>
-    <div id="reportsContainer"></div>
-  </div>
-
-  <button class="clear-all-btn" onclick="clearAllData()">Очистить ВСЕ данные (новый день)</button>
 
   <script>
-    // Дата сегодня
-    function today() {
-      return new Date().toISOString().split('T')[0];
-    }
-    function getDateDaysAgo(days) {
-      const d = new Date();
-      d.setDate(d.getDate() - days);
-      return d.toISOString().split('T')[0];
-    }
-    function getWeekStart() {
-      const d = new Date();
-      const day = d.getDay() || 7;
-      d.setDate(d.getDate() - (day - 1));
-      return d.toISOString().split('T')[0];
-    }
-    function getMonthStart() {
-      const d = new Date();
-      return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
-    }
+    const types = [
+      { name: "Солевик", color: "white" },
+      { name: "Мятноплод", color: "green" },
+      { name: "Спиртень", color: "purple" },
+      { name: "Сластена", color: "blue" },
+      { name: "Лимонник", color: "yellow" },
+      { name: "Куборбуза", color: "red" }
+    ];
 
-    // Загрузка истории
-    let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+    let templates = [];
+    let prices = {};
 
-    // Мгновенный предпросмотр
-    function updatePreview(type) {
-      const prefix = type === 'buy' ? 'buy' : 'sell';
-      const name = document.getElementById(prefix + 'Name').value.trim();
-      const price = parseFloat(document.getElementById(prefix + 'Price').value) || 0;
-      const qty = parseInt(document.getElementById(prefix + 'Qty').value) || 0;
-      const total = price * qty;
+    // Инициализация
+    function init() {
+      const tempDiv = document.getElementById("templates");
+      const priceDiv = document.getElementById("prices");
+      types.forEach((t, i) => {
+        // Шаблон
+        const div = document.createElement("div");
+        div.className = "template-item";
+        div.innerHTML = `
+          <div style="background:${t.color};width:80px;height:80px;border-radius:8px;"></div>
+          <p><strong>${t.name}</strong></p>
+          <input type="file" id="temp${i}" accept="image/*" />
+        `;
+        tempDiv.appendChild(div);
 
-      document.getElementById(prefix + 'Preview').textContent = name 
-        ? `Итого: ${total.toFixed(2)}` 
-        : 'Итого: 0.00';
-    }
-
-    // Сохранение покупки
-    function saveBuy() {
-      const name = document.getElementById('buyName').value.trim();
-      const price = parseFloat(document.getElementById('buyPrice').value);
-      const qty = parseInt(document.getElementById('buyQty').value);
-
-      if (!name) { alert("Укажите название."); return; }
-      if (isNaN(price) || price < 0) { alert("Некорректная цена."); return; }
-      if (isNaN(qty) || qty < 1) { alert("Некорректное количество."); return; }
-
-      const total = price * qty;
-      transactions.push({ type: 'buy', name, price, quantity: qty, total, date: today() });
-      localStorage.setItem('transactions', JSON.stringify(transactions));
-
-      // Не сбрасываем форму — только фокус на количестве
-      document.getElementById('buyQty').select();
-      document.getElementById('buyQty').focus();
-
-      renderReports();
-    }
-
-    // Сохранение продажи
-    function saveSell() {
-      const name = document.getElementById('sellName').value.trim();
-      const price = parseFloat(document.getElementById('sellPrice').value);
-      const qty = parseInt(document.getElementById('sellQty').value);
-
-      if (!name) { alert("Укажите название."); return; }
-      if (isNaN(price) || price < 0) { alert("Некорректная цена."); return; }
-      if (isNaN(qty) || qty < 1) { alert("Некорректное количество."); return; }
-
-      const total = price * qty;
-      transactions.push({ type: 'sell', name, price, quantity: qty, total, date: today() });
-      localStorage.setItem('transactions', JSON.stringify(transactions));
-
-      document.getElementById('sellQty').select();
-      document.getElementById('sellQty').focus();
-
-      renderReports();
-    }
-
-    // Очистка форм
-    function clearBuyForm() {
-      document.getElementById('buyName').value = '';
-      document.getElementById('buyPrice').value = '';
-      document.getElementById('buyQty').value = '';
-      updatePreview('buy');
-      document.getElementById('buyName').focus();
-    }
-    function clearSellForm() {
-      document.getElementById('sellName').value = '';
-      document.getElementById('sellPrice').value = '';
-      document.getElementById('sellQty').value = '';
-      updatePreview('sell');
-      document.getElementById('sellName').focus();
-    }
-
-    // Отчёты
-    function filterByDateRange(startDate, endDate = today()) {
-      return transactions.filter(t => t.date >= startDate && t.date <= endDate);
-    }
-
-    function generateReport(transactions, title) {
-      if (transactions.length === 0) return '';
-
-      let spent = 0, earned = 0;
-      let itemsHtml = '';
-
-      transactions.forEach(t => {
-        const className = t.type === 'buy' ? 'buy-item' : 'sell-item';
-        const sign = t.type === 'buy' ? '–' : '+';
-        itemsHtml += `<div class="item ${className}">${sign} ${t.name} ×${t.quantity} по ${t.price.toFixed(2)} = ${t.total.toFixed(2)} (${t.date})</div>`;
-        if (t.type === 'buy') spent += t.total;
-        if (t.type === 'sell') earned += t.total;
+        // Цена
+        const p = document.createElement("div");
+        p.innerHTML = `${t.name}: <input type="number" id="price${i}" value="0" /> руб`;
+        priceDiv.appendChild(p);
       });
-
-      const profit = earned - spent;
-      const profitColor = profit >= 0 ? '#2e7d32' : '#c62828';
-
-      return `
-        <div class="period-header">${title}</div>
-        <div>${itemsHtml}</div>
-        <div class="summary">
-          Потрачено: <strong>${spent.toFixed(2)}</strong> | 
-          Выручка: <strong>${earned.toFixed(2)}</strong> | 
-          Прибыль: <strong style="color:${profitColor}">${profit >= 0 ? '+' : ''}${profit.toFixed(2)}</strong>
-        </div>
-      `;
+      loadSavedData();
     }
 
-    function renderReports() {
-      const container = document.getElementById('reportsContainer');
-
-      const todayTx = filterByDateRange(today());
-      const yesterdayTx = filterByDateRange(getDateDaysAgo(1), getDateDaysAgo(1));
-      const weekTx = filterByDateRange(getWeekStart());
-      const monthTx = filterByDateRange(getMonthStart());
-
-      let html = '';
-      html += generateReport(todayTx, 'Сегодня');
-      html += generateReport(yesterdayTx, 'Вчера');
-      html += generateReport(weekTx, 'Эта неделя');
-      html += generateReport(monthTx, 'Этот месяц');
-
-      container.innerHTML = html || '<p>Нет данных</p>';
+    // Сохранение шаблонов
+    async function saveTemplates() {
+      templates = [];
+      for (let i = 0; i < types.length; i++) {
+        const file = document.getElementById(`temp${i}`).files[0];
+        if (file) {
+          const img = await loadImage(file);
+          templates.push({ type: types[i], image: img });
+        }
+      }
+      localStorage.setItem("pulp_templates", JSON.stringify(templates.map(t => ({
+        type: t.type.name,
+        data: t.image.src
+      }))));
+      alert("Шаблоны сохранены!");
     }
 
-    function clearAllData() {
-      if (confirm("Очистить ВСЕ данные? Это начнёт новый день.")) {
-        transactions = [];
-        localStorage.removeItem('transactions');
-        renderReports();
+    // Сохранение цен
+    function savePrices() {
+      prices = {};
+      types.forEach((t, i) => {
+        const val = document.getElementById(`price${i}`).value;
+        prices[t.name] = parseInt(val) || 0;
+      });
+      localStorage.setItem("pulp_prices", JSON.stringify(prices));
+      alert("Цены сохранены!");
+    }
+
+    // Загрузка данных
+    function loadSavedData() {
+      const savedTemp = localStorage.getItem("pulp_templates");
+      const savedPrice = localStorage.getItem("pulp_prices");
+      if (savedPrice) {
+        prices = JSON.parse(savedPrice);
+        types.forEach((t, i) => {
+          document.getElementById(`price${i}`).value = prices[t.name] || 0;
+        });
+      }
+      if (savedTemp) {
+        const data = JSON.parse(savedTemp);
+        data.forEach((d, i) => {
+          document.getElementById(`temp${i}`).nextElementSibling.src = d.data;
+        });
       }
     }
 
-    // Инициализация
-    updatePreview('buy');
-    updatePreview('sell');
-    renderReports();
-  </script>
+    // Обработка скриншота
+    async function processScreenshot() {
+      const file = document.getElementById("screenshot").files[0];
+      if (!file || templates.length === 0) {
+        alert("Загрузи шаблоны и скриншот!");
+        return;
+      }
 
+      const img = await loadImage(file);
+      const canvas = document.getElementById("debugCanvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      const grid = detectGrid(img);
+      const results = [];
+
+      for (let cell of grid) {
+        const match = findBestTemplate(cell.image, ctx, cell);
+        if (match) {
+          const count = await readNumber(cell.image, ctx, cell);
+          results.push({ type: match.type.name, count: count || 0, price: prices[match.type.name] || 0 });
+        }
+      }
+
+      displayResults(results);
+    }
+
+    // Поиск сетки 2x3
+    function detectGrid(img) {
+      const cells = [];
+      const w = img.width / 3;
+      const h = img.height / 2;
+      for (let y = 0; y < 2; y++) {
+        for (let x = 0; x < 3; x++) {
+          const canvas = document.createElement("canvas");
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, x * w, y * h, w, h, 0, 0, w, h);
+          cells.push({ image: canvas, x: x * w, y: y * h, w, h });
+        }
+      }
+      return cells;
+    }
+
+    // Сравнение с шаблоном
+    function findBestTemplate(cellCanvas, mainCtx, cell) {
+      let best = null;
+      let bestScore = Infinity;
+      const cellData = cellCanvas.getContext("2d").getImageData(0, 0, cell.w, cell.h).data;
+
+      for (let temp of templates) {
+        const tempImg = new Image();
+        tempImg.src = temp.image.src;
+        const tempCanvas = document.createElement("canvas");
+        tempCanvas.width = cell.w;
+        tempCanvas.height = cell.h;
+        const tctx = tempCanvas.getContext("2d");
+        tctx.drawImage(tempImg, 0, 0, cell.w, cell.h);
+        const tempData = tctx.getImageData(0, 0, cell.w, cell.h).data;
+
+        let diff = 0;
+        for (let i = 0; i < cellData.length; i += 12) {
+          diff += Math.abs(cellData[i] - tempData[i]) +
+                  Math.abs(cellData[i+1] - tempData[i+1]) +
+                  Math.abs(cellData[i+2] - tempData[i+2]);
+        }
+        if (diff < bestScore) {
+          bestScore = diff;
+          best = temp;
+        }
+      }
+      if (bestScore < 5000000) {
+        mainCtx.strokeStyle = "#0f0";
+        mainCtx.lineWidth = 3;
+        mainCtx.strokeRect(cell.x, cell.y, cell.w, cell.h);
+        mainCtx.fillStyle = "#0f0";
+        mainCtx.font = "20px Arial";
+        mainCtx.fillText(best.type.name, cell.x + 10, cell.y + 30);
+      }
+      return bestScore < 5000000 ? best : null;
+    }
+
+    // OCR числа
+    async function readNumber(canvas, mainCtx, cell) {
+      const crop = document.createElement("canvas");
+      crop.width = 100;
+      crop.height = 50;
+      const ctx = crop.getContext("2d");
+      ctx.drawImage(canvas, canvas.width - 100, 0, 100, 50, 0, 0, 100, 50);
+
+      const worker = await Tesseract.createWorker();
+      await worker.load();
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+      await worker.setParameters({ tessedit_char_whitelist: '0123456789x' });
+      const { data: { text } } = await worker.recognize(crop);
+      await worker.terminate();
+
+      const num = text.match(/(\d+)x?/i);
+      const value = num ? parseInt(num[1]) : 0;
+
+      mainCtx.fillStyle = "#ff0";
+      mainCtx.fillText(value + "x", cell.x + cell.w - 80, cell.y + 40);
+
+      return value;
+    }
+
+    function displayResults(results) {
+      const table = document.getElementById("table");
+      table.innerHTML = `<tr><th>Мякоть</th><th>Кол-во</th><th>Цена/шт</th><th>Итого</th></tr>`;
+      let total = 0;
+      results.forEach(r => {
+        const sum = r.count * r.price;
+        total += sum;
+        table.innerHTML += `<tr>
+          <td>${r.type}</td>
+          <td>${r.count}</td>
+          <td>${r.price}</td>
+          <td>${sum.toLocaleString()}</td>
+        </tr>`;
+      });
+      document.getElementById("total").innerText = `ИТОГО: ${total.toLocaleString()} руб`;
+      document.getElementById("result").style.display = "block";
+    }
+
+    function loadImage(file) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    init();
+  </script>
 </body>
 </html>
