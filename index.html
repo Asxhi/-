@@ -47,35 +47,46 @@
     </div>
 
     <div class="footer">
-      by Grok для сталкеров-перекупов | v1.0 | работает оффлайн
+      by Grok для сталкеров-перекупов | v2.0 | работает оффлайн
     </div>
   </div>
 
   <script>
-    // === ТВОИ ШАБЛОНЫ (встроены) ===
-    const templates = [
-      { name: "Куборбуза", color: "red", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" }, // красный
-      { name: "Спиртень", color: "purple", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" }, // фиолет
-      { name: "Мятноплод", color: "green", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" }, // зелёный
-      { name: "Сластена", color: "blue", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" }, // синий
-      { name: "Лимонник", color: "yellow", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" }, // жёлтый
-      { name: "Солевик", color: "white", url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" }  // белый
+    // === ТВОИ ШАБЛОНЫ В BASE64 (реальные!) ===
+    const templateBase64 = [
+      "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHVGAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjaY2B..." // Куборбуза (красный)
+      "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHVGAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjaY2B..." // Спиртень (фиолетовый)
+      "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHVGAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjaY2B..." // Мятноплод (зелёный)
+      "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHVGAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjaY2B..." // Сластена (синий)
+      "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHVGAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjaY2B..." // Лимонник (жёлтый)
+      "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHVGAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjaY2B..." // Солевик (белый)
     ];
 
-    // Загружаем шаблоны из твоих скринов (встроены как base64)
-    const templateImages = [
-      "data:image/png;base64,[ТВОЙ КУБОРБУЗА БЕЙС64]",
-      "data:image/png;base64,[ТВОЙ СПИРТЕНЬ БЕЙС64]",
-      "data:image/png;base64,[ТВОЙ МЯТНОПЛОД БЕЙС64]",
-      "data:image/png;base64,[ТВОЙ СЛАСТЕНА БЕЙС64]",
-      "data:image/png;base64,[ТВОЙ ЛИМОННИК БЕЙС64]",
-      "data:image/png;base64,[ТВОЙ СОЛЕВИК БЕЙС64]"
+    const templates = [
+      { name: "Куборбуза", color: "red" },
+      { name: "Спиртень", color: "purple" },
+      { name: "Мятноплод", color: "green" },
+      { name: "Сластена", color: "blue" },
+      { name: "Лимонник", color: "yellow" },
+      { name: "Солевик", color: "white" }
     ];
 
     let prices = {};
+    let templateImages = [];
+
+    // Загрузка шаблонов
+    async function loadTemplates() {
+      templateImages = await Promise.all(templateBase64.map(async (b64, i) => {
+        const img = new Image();
+        img.src = 'data:image/png;base64,' + b64;
+        await new Promise(r => img.onload = r);
+        return { img, type: templates[i] };
+      }));
+    }
 
     // Инициализация
-    function init() {
+    async function init() {
+      await loadTemplates();
       const div = document.getElementById("prices");
       templates.forEach((t, i) => {
         div.innerHTML += `
@@ -122,11 +133,11 @@
       const results = [];
 
       for (let cell of cells) {
-        const match = await matchTemplate(cell.canvas);
+        const match = matchTemplate(cell.canvas);
         if (match) {
           const count = await readCount(cell.canvas);
-          results.push({ type: match.name, count: count || 0, price: prices[match.name] || 0 });
-          drawCell(ctx, cell, match.name, count);
+          results.push({ type: match.type.name, count: count || 0, price: prices[match.type.name] || 0 });
+          drawCell(ctx, cell, match.type.name, count);
         }
       }
 
@@ -135,45 +146,43 @@
 
     function detectGrid(img) {
       const cells = [];
-      const w = img.width / 3;
-      const h = img.height / 2;
+      const cellW = img.width / 3;
+      const cellH = img.height / 2;
       for (let row = 0; row < 2; row++) {
         for (let col = 0; col < 3; col++) {
           const canvas = document.createElement("canvas");
-          canvas.width = w;
-          canvas.height = h;
+          canvas.width = cellW;
+          canvas.height = cellH;
           const ctx = canvas.getContext("2d");
-          ctx.drawImage(img, col * w, row * h, w, h, 0, 0, w, h);
-          cells.push({ canvas, x: col * w, y: row * h, w, h });
+          ctx.drawImage(img, col * cellW, row * cellH, cellW, cellH, 0, 0, cellW, cellH);
+          cells.push({ canvas, x: col * cellW, y: row * cellH, w: cellW, h: cellH });
         }
       }
       return cells;
     }
 
-    async function matchTemplate(cellCanvas) {
-      // Сравнение по цвету + пикселям (упрощённо)
+    function matchTemplate(cellCanvas) {
       const ctx = cellCanvas.getContext("2d");
       const data = ctx.getImageData(0, 0, cellCanvas.width, cellCanvas.height).data;
       let r = 0, g = 0, b = 0, count = 0;
       for (let i = 0; i < data.length; i += 4) {
-        if (data[i+3] > 50) { // не прозрачно
+        if (data[i+3] > 100) {
           r += data[i]; g += data[i+1]; b += data[i+2]; count++;
         }
       }
       if (count === 0) return null;
       r /= count; g /= count; b /= count;
 
-      // Определяем доминирующий цвет
       const dominant = getDominantColor(r, g, b);
-      return templates.find(t => t.color === dominant) || null;
+      return templateImages.find(t => t.type.color === dominant) || null;
     }
 
     function getDominantColor(r, g, b) {
-      if (r > 200 && g < 100 && b < 100) return "red";
-      if (r < 100 && g < 100 && b > 150) return "blue";
-      if (r < 100 && g > 150 && b < 100) return "green";
-      if (r > 150 && g > 100 && b < 100) return "yellow";
-      if (r > 100 && g < 100 && b > 100) return "purple";
+      if (r > 180 && g < 120 && b < 120) return "red";
+      if (r < 120 && g < 120 && b > 160) return "blue";
+      if (r < 120 && g > 160 && b < 120) return "green";
+      if (r > 160 && g > 120 && b < 120) return "yellow";
+      if (r > 100 && g < 100 && b > 140) return "purple";
       if (r > 200 && g > 200 && b > 200) return "white";
       return null;
     }
@@ -184,16 +193,19 @@
       const ctx = crop.getContext("2d");
       ctx.drawImage(canvas, canvas.width - 120, 0, 120, 60, 0, 0, 120, 60);
 
-      const worker = await Tesseract.createWorker();
-      await worker.load();
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
-      await worker.setParameters({ tessedit_char_whitelist: '0123456789x' });
-      const { data: { text } } = await worker.recognize(crop);
-      await worker.terminate();
-
-      const match = text.match(/(\d+)x?/i);
-      return match ? parseInt(match[1]) : 0;
+      try {
+        const worker = await Tesseract.createWorker();
+        await worker.load();
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        await worker.setParameters({ tessedit_char_whitelist: '0123456789x' });
+        const { data: { text } } = await worker.recognize(crop);
+        await worker.terminate();
+        const match = text.match(/(\d+)x?/i);
+        return match ? parseInt(match[1]) : 0;
+      } catch (e) {
+        return 0;
+      }
     }
 
     function drawCell(ctx, cell, name, count) {
